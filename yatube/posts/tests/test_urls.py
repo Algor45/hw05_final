@@ -2,6 +2,7 @@ import datetime as dt
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import Client, TestCase
 from posts.models import Group, Post
 
@@ -10,10 +11,11 @@ User = get_user_model()
 
 class PostsURLTests(TestCase):
     def setUp(self):
-        self.guest_client = Client()
         self.user = User.objects.create_user(username='user')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.guest_client = Client()
+        cache.clear()
 
     @classmethod
     def setUpClass(cls):
