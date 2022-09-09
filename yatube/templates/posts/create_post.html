@@ -1,0 +1,23 @@
+{% extends 'posts/includes/create_edit_post.html' %}
+{% load thumbnail %}
+
+{% block method_action %}
+    <form method="post" enctype="multipart/form-data" action="{% if is_edit == True %}{% url 'posts:post_edit' post.pk %}{% else %}{% url 'posts:post_create' %}{% endif %}">
+{% endblock method_action%}
+
+{% block function %}
+  {% if is_edit %}
+    Редактировать пост
+  {% else %}
+    Добавить пост
+  {% endif %}
+{% endblock function %}
+
+
+{% block button %}
+  {% if is_edit  %}
+    Сохранить
+  {% else %}
+    Добавить
+  {% endif %}
+{% endblock button %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% block title %} Подписчики {% endblock title %}
+{% block content %}
+{% include 'posts/includes/switcher.html' %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/post_obj.html' %}
+    {% if not forloop.last %}<hr>{% endif %}
+    {% endfor %}
+{% include 'posts/includes/paginator.html' %}
+{% endblock content %}
