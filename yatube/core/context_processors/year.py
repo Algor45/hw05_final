@@ -1,3 +1,4 @@
+"""Write your context_processors here."""
 from datetime import datetime
 
 

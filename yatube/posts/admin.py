@@ -1,9 +1,12 @@
+"""Write here Admin settings for Posts app."""
+
 from django.contrib import admin
 
 from .models import Group, Post
 
 
 class PostAdmin(admin.ModelAdmin):
+    """Set your Admin settings here."""
 
     list_display = ('pk', 'text', 'pub_date', 'author', 'group')
     list_editable = ('group',)

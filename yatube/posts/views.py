@@ -1,3 +1,5 @@
+"""Write your Posts app view functions here."""
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest
@@ -11,6 +13,7 @@ POSTS_PER_PAGE = 10
 
 
 def context_pagination(queryset, request):
+    """Функция паджинатор."""
     paginator = Paginator(queryset, POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -19,6 +22,7 @@ def context_pagination(queryset, request):
 
 @cache_page(20, key_prefix='index_page')
 def index(request: HttpRequest):
+    """Функция для отображения главной страницы."""
     template: str = 'posts/index.html'
     post_list = Post.objects.all()
     context = context_pagination(post_list, request)
@@ -26,6 +30,7 @@ def index(request: HttpRequest):
 
 
 def group_posts(request: HttpRequest, slug: str):
+    """Функция для отображения страницы группы."""
     group = (get_object_or_404(Group.objects.prefetch_related('posts'),
              slug=slug))
     post_list = group.posts.all()
@@ -36,6 +41,7 @@ def group_posts(request: HttpRequest, slug: str):
 
 
 def profile(request: HttpRequest, username):
+    """Функция для отображения страницы профиля."""
     author = (get_object_or_404(User,
               username=username))
     following = False
@@ -53,6 +59,7 @@ def profile(request: HttpRequest, username):
 
 
 def post_detail(request: HttpRequest, post_id):
+    """Функция для отображения страницы поста."""
     template: str = 'posts/post_detail.html'
     post = (get_object_or_404(Post,
             pk=post_id))
@@ -66,6 +73,7 @@ def post_detail(request: HttpRequest, post_id):
 
 @login_required
 def post_create(request):
+    """Функция для страницы создания поста."""
     template: str = 'posts/create_post.html'
     form = PostForm(request.POST or None, files=request.FILES or None,)
     if request.method == 'POST' and form.is_valid():
@@ -79,6 +87,7 @@ def post_create(request):
 
 @login_required
 def post_edit(request, post_id):
+    """Функция для страницы редактирования поста."""
     template: str = 'posts/create_post.html'
     post = get_object_or_404(Post, pk=post_id)
     if post.author != request.user:
@@ -99,6 +108,7 @@ def post_edit(request, post_id):
 
 @login_required
 def add_comment(request, post_id):
+    """Функция для дщобавления комментария."""
     post = get_object_or_404(Post, pk=post_id)
     form = CommentForm(request.POST or None)
     if form.is_valid():
@@ -111,6 +121,7 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
+    """Функция для страницы избранных авторов."""
     post_list = Post.objects.filter(author__following__user=request.user)
     context = context_pagination(post_list, request)
     return render(request, 'posts/follow.html', context)
@@ -118,6 +129,7 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
+    """Функция для подписки на автора."""
     author = get_object_or_404(User, username=username)
     if request.user != author:
         Follow.objects.get_or_create(user=request.user, author=author)
@@ -126,7 +138,9 @@ def profile_follow(request, username):
 
 @login_required
 def profile_unfollow(request, username):
+    """Функция для отписки от автора."""
     author = get_object_or_404(User, username=username)
     if request.user != author:
-        Follow.objects.filter(user=request.user, author=author).delete()
+        if Follow.objects.filter(user=request.user, author=author).exists():
+            Follow.objects.filter(user=request.user, author=author).delete()
     return redirect('posts:profile', username=username)

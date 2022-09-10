@@ -1,3 +1,5 @@
+"""Write your about app URL's here."""
+
 from django.urls import path
 
 from . import views

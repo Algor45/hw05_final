@@ -1,3 +1,5 @@
+"""Write your users app URL's here."""
+
 from django.contrib.auth.views import (LoginView, LogoutView,
                                        PasswordChangeDoneView,
                                        PasswordChangeView,

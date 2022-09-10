@@ -1,8 +1,13 @@
+"""Write your About app tests here."""
+
 from django.test import Client, TestCase
 
 
 class AboutURLTests(TestCase):
+    """Тесты страниц приложения About."""
+
     def setUp(self):
+        """Устанавливает значения перед каждым тестом."""
         self.guest_client = Client()
 
     def test_tech_url_exists_at_desired_location(self):

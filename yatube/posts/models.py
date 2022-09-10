@@ -1,3 +1,5 @@
+"""Set your Posts models here."""
+
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
@@ -7,7 +9,8 @@ User = get_user_model()
 
 
 class Group(models.Model):
-    """Модель сообщества"""
+    """Модель сообщества."""
+
     title: str = models.CharField(max_length=200,
                                   verbose_name='Название группы',
                                   help_text='Укажите название группы')
@@ -18,15 +21,19 @@ class Group(models.Model):
                                         help_text='Опишите группу')
 
     class Meta:
+        """Meta модели Group."""
+
         verbose_name = 'Группа'
         verbose_name_plural = 'Группы'
 
     def __str__(self) -> str:
+        """Функция __str__ модели Group."""
         return self.title
 
 
 class Post(models.Model):
-    """Модель записей """
+    """Модель записей."""
+
     text: str = models.TextField(verbose_name='Текст поста',
                                  help_text='Содержание поста')
     pub_date: datetime = models.DateTimeField(auto_now_add=True,
@@ -54,16 +61,20 @@ class Post(models.Model):
     )
 
     class Meta:
+        """Meta модели Post."""
+
         ordering = ['-pub_date']
         verbose_name = 'Сообщение'
         verbose_name_plural = 'Сообщения'
 
     def __str__(self):
+        """Функция __str__ модели Post."""
         return self.text[:15]
 
 
 class Comment(models.Model):
-    """ Модель комментариев"""
+    """Модель комментариев."""
+
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -85,17 +96,16 @@ class Comment(models.Model):
 
 
 class Follow(models.Model):
-    """Модель подписок"""
+    """Модель подписок."""
+
     user = models.ForeignKey(
         User,
-        blank=True, null=True,
         on_delete=models.CASCADE,
         related_name='follower',
         verbose_name='Подписчик',
     )
     author = models.ForeignKey(
         User,
-        blank=True, null=True,
         on_delete=models.CASCADE,
         related_name='following',
         verbose_name='Следят',

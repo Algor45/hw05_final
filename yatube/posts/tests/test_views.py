@@ -25,7 +25,7 @@ class PostsViewsTests(TestCase):
         self.authorized_client.force_login(self.user)
         comment_author = User.objects.create(username='comment author')
         self.comment = Comment.objects.create(
-            text='Тестовый коментарий',
+            text='Тестовый комментарий',
             author=comment_author,
             post=self.post
         )
@@ -53,29 +53,51 @@ class PostsViewsTests(TestCase):
             text='Тестовый текст',
             pub_date=dt.datetime.now(),
             author=post_author,
-            group_id=0,
-            pk=0,
+            group_id=1,
             image=uploaded,
         )
 
         cls.group = Group.objects.create(
             title='test_group',
             slug='test-slug',
-            description='test_desk',
-            pk=0
+            description='test_desk'
         )
 
         cls.another_group = Group.objects.create(
             title='another_group',
             slug='another-slug',
-            description='another_desk',
-            pk=1
+            description='another_desk'
         )
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
+    def check_index_context(self, response_post, post):
+        """Проверка созданного поста и поста полученного со страницы."""
+        self.assertEqual(response_post.text, post.text,
+                         'поле text не совпадает с заданным')
+        self.assertEqual(response_post.pk, post.pk,
+                         'поле pk не совпадает с заданным  ')
+        self.assertEqual(response_post.group, post.group,
+                         'поле group не совпадает с заданным')
+        self.assertEqual(response_post.author.username, post.author.username,
+                         'поле author не совпадает с заданным')
+
+    def check_post_detail_context(self, response, post):
+        """Проверка созданного поста и ответа со страницы post_detail."""
+        self.assertEqual(response.context.get('post').group_id,
+                         post.group.pk,
+                         'Ошибка в поле group')
+        self.assertEqual(response.context.get('post').text, post.text,
+                         'Ошибка в поле text')
+        self.assertEqual(response.context.get('post').pk, post.pk,
+                         'Передан неверный pk')
+        self.assertEqual(
+            response.context.get('post').author.username,
+            post.author.username,
+            'Передан неверный author')
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -104,16 +126,7 @@ class PostsViewsTests(TestCase):
         response = (self.authorized_client.
                     get(reverse('posts:post_detail', kwargs={'post_id':
                                                              self.post.pk})))
-        self.assertEqual(response.context.get('post').group_id, 0,
-                         'Ошибка в поле group')
-        self.assertEqual(response.context.get('post').text, self.post.text,
-                         'Ошибка в поле text')
-        self.assertEqual(response.context.get('post').pk, self.post.pk,
-                         'Передан неверный pk')
-        self.assertEqual(
-            response.context.get('post').author.username,
-            self.post.author.username,
-            'Передан неверный author')
+        self.check_post_detail_context(response, self.post)
         self.assertTrue(response.context.get('post').image,
                         'не выводится изображение на странице поста')
 
@@ -122,14 +135,7 @@ class PostsViewsTests(TestCase):
         response = (self.authorized_client.
                     get(reverse('posts:index')))
         post = response.context['page_obj'][0]
-        self.assertEqual(post.text, self.post.text,
-                         'поле text не совпадает с заданным')
-        self.assertEqual(post.pk, self.post.pk,
-                         'поле pk не совпадает с заданным  ')
-        self.assertEqual(post.group, self.post.group,
-                         'поле group не совпадает с заданным')
-        self.assertEqual(post.author.username, self.post.author.username,
-                         'поле author не совпадает с заданным')
+        self.check_index_context(post, self.post)
         self.assertTrue(response.context.get('post').image,
                         'не выводится изображение на главной странице')
 
@@ -201,15 +207,22 @@ class PostsViewsTests(TestCase):
     def test_edit_page_show_correct_field_values(self):
         """ Проверка вывода значений в форму edit_page"""
         response = (self.authorized_client.
-                    get(reverse('posts:post_edit', kwargs={'post_id': '0'})))
+                    get(reverse('posts:post_edit', kwargs={'post_id':
+                                                           self.post.pk})))
         self.assertEqual(response.context.get('post').text, self.post.text,
                          'ошибка при выводе значения text')
         self.assertEqual(
             response.context.get('post').group.title, self.post.group.title,
             'ошибка при выводе значения group')
 
+    def test_comment_exists_base(self):
+        """ Проверка что комментарий имеется в базе"""
+        self.assertEqual(Comment.objects.filter(
+                         text='Тестовый комментарий').get(),
+                         self.comment)
+
     def test_comment_adds(self):
-        """ Проверка что комментарий передается в post_detail"""
+        """ Проверка что комментарий передается на страницу post_detail"""
         response = (self.authorized_client.
                     get(reverse('posts:post_detail', kwargs={'post_id':
                                                              self.post.pk})))
@@ -219,10 +232,8 @@ class PostsViewsTests(TestCase):
 
     def test_index_cache(self):
         """ Проверка кэширования"""
-        post_author = User.objects.create(username='author2')
         cached_post = Post.objects.create(
-            pk=3,
-            author=post_author,
+            author=self.another_author,
             text='Кэшированный тестовый текст поста'
         )
         response = (self.authorized_client.
@@ -254,14 +265,13 @@ class PaginatorTests(TestCase):
         cls.group = Group.objects.create(
             title='test_group',
             slug='test-slug',
-            description='test_desk',
-            pk=0
+            description='test_desk'
         )
         number_of_posts = 13
         Post.objects.bulk_create(Post(text=f'Тестовый текст {number}',
                                       author=post_author,
                                       pub_date=dt.datetime.now(),
-                                      group_id=0)
+                                      group_id=1)
                                  for number in range(number_of_posts))
 
     def test_first_index_page_contains_ten_records(self):
@@ -318,22 +328,19 @@ class FollowTests(TestCase):
         cls.group = Group.objects.create(
             title='test_group',
             slug='test-slug',
-            description='test_desk',
-            pk=0
+            description='test_desk'
         )
         cls.post_follow = Post.objects.create(
             text='Пост подписанного автора',
             pub_date=dt.datetime.now(),
             author=cls.author_followed,
-            group_id=0,
-            pk=0,
+            group_id=1
         )
         cls.post_not_follow = Post.objects.create(
             text='Пост не подписанного автора ',
             pub_date=dt.datetime.now(),
             author=cls.author_not_followed,
-            group_id=0,
-            pk=1
+            group_id=1
         )
         cls.follow = Follow.objects.create(
             user=cls.current_user,
@@ -344,38 +351,45 @@ class FollowTests(TestCase):
         self.authorized_user = Client()
         self.authorized_user.force_login(self.current_user)
 
-    def test_new_post_follow(self):
-        """ Проверка что на странице появляются новые посты
-            только отслеживаемых авторов"""
-        new_post_f = Post.objects.create(
-            pk=4,
+    def test_new_post_shows_follow(self):
+        """ Проверка новый пост появляется ксли есть подписка на автора"""
+        new_post = Post.objects.create(
             author=self.author_followed,
             text='Новый пост отслеживаемого автора'
         )
-        new_post_n = Post.objects.create(
-            pk=5,
+        response = (self.authorized_user.
+                    get(reverse('posts:follow_index')))
+
+        self.assertIn(new_post.text, response.content.decode(),
+                      'Не выведен пост отслеживаемого автора')
+
+    def test_new_post_hide_unfollow(self):
+        """ Новый пост не отображается если нет подписки на автора """
+        new_post = Post.objects.create(
             author=self.author_not_followed,
             text='Новый пост не отслеживаемого автора'
         )
         response = (self.authorized_user.
                     get(reverse('posts:follow_index')))
-
-        self.assertIn(new_post_f.text, response.content.decode(),
-                      'Не выведен пост отслеживаемого автора')
-        self.assertNotIn(new_post_n.text, response.content.decode(),
+        self.assertNotIn(new_post.text, response.content.decode(),
                          'Выведен пост неотслеживаемого автора')
 
-    def test_follow_unfollow(self):
-        """ Проверка возможности подписаться и отписаться"""
+    def test_unfollow(self):
+        """ Проверка возможности отписаться"""
         self.authorized_user.get(reverse('posts:profile_unfollow',
                                          kwargs={'username':
                                                  self.author_followed}))
-        followed_authors = Follow.objects.select_related()
+        followed_authors = Follow.objects.filter(user=self.current_user,
+                                                 author=self.author_followed)
         self.assertEqual(followed_authors.count(), 0,
                          'Не удалось отписаться от автора ')
+
+    def test_follow(self):
+        """ Проверка возможности подписаться"""
         self.authorized_user.get(reverse('posts:profile_follow',
                                          kwargs={'username':
                                                  self.author_not_followed}))
-        followed_authors = Follow.objects.select_related()
+        followed_authors = Follow.objects.filter(user=self.current_user,
+                                                 author=self.author_followed)
         self.assertEqual(followed_authors.count(), 1,
                          'Не удалось подписаться на автора')
