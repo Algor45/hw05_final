@@ -119,12 +119,16 @@ class PostsViewsTests(TestCase):
         response = (self.authorized_client.
                     get(reverse('posts:post_detail', kwargs={'post_id':
                                                              self.post.pk})))
+        self.assertIn(self.post.pk, response.context,
+                      'выведен неверный пост')
         self.check_context(response, self.post)
 
     def test_index_show_correct_context(self):
         """Проверка правильности вывода постов на главную страницу."""
         response = (self.authorized_client.
                     get(reverse('posts:index')))
+        self.assertIn(self.post, response.context.get('page_obj'),
+                      'Поста нет на странице')
         self.check_context(response, self.post)
 
     def test_group_list_show_correct_context(self):
@@ -132,6 +136,8 @@ class PostsViewsTests(TestCase):
         response = (self.authorized_client.
                     get(reverse('posts:group_posts',
                                 kwargs={'slug': self.group.slug})))
+        self.assertIn(self.post, response.context.get('page_obj'),
+                      'Поста нет на странице')
         self.check_context(response, self.post)
 
     def test_profile_show_correct_context(self):
@@ -139,6 +145,8 @@ class PostsViewsTests(TestCase):
         response = (self.authorized_client.
                     get(reverse('posts:profile',
                                 kwargs={'username': 'author'})))
+        self.assertIn(self.post, response.context.get('page_obj'),
+                      'Поста нет на странице')
         self.check_context(response, self.post)
 
     def test_create_page_correct_context_fields(self):
