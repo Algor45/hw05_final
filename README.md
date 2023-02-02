@@ -44,6 +44,17 @@ py -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+Создать файл .env и записать в него secret key в формате:
+
+```
+SECRET_KEY='Ваш ключ'
+
+для генерации ключа можно использовать сайт:
+
+https://djecrety.ir/
+```
+
+
 Перейти в папку, в которой находится файл manage.py:
 
 ```
@@ -101,6 +112,7 @@ pytest==6.2.4
 pytest-django==4.4.0
 pytest-pythonpath==0.7.3
 python-dateutil==2.8.2
+python-dotenv==0.21.1
 pytz==2022.2.1
 requests==2.26.0
 six==1.16.0
