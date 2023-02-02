@@ -30,8 +30,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '[::1]',
     'testserver',
-    'www.Algor45.pythonanywhere.com',
-    'Algor45.pythonanywhere.com',
 ]
 
 INTERNAL_IPS = [
