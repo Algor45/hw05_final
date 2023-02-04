@@ -44,9 +44,12 @@ py -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Создать файл .env и записать в него secret key в формате:
+Перед использованием сгенерируйте новый секретный ключ
+и укажите его в файле:
 
 ```
+yatube/yatube/settings.py
+
 SECRET_KEY='Ваш ключ'
 
 для генерации ключа можно использовать сайт:
